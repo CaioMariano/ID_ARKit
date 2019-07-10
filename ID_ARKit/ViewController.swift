@@ -13,30 +13,24 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
+    var idNode: SCNNode!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Set the view's delegate
-        sceneView.delegate = self
-        
-        // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
-        
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
-        
-        // Set the scene to the view
-        sceneView.scene = scene
+        let sceneView = SCNScene()
+        self.sceneView.scene = sceneView
+        self.sceneView.delegate = self        
+        self.sceneView.showsStatistics = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // Create a session configuration
+        guard let referenceImage = ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) else { fatalError() }
+        
         let configuration = ARWorldTrackingConfiguration()
-
-        // Run the view's session
+        configuration.detectionImages = referenceImage
         sceneView.session.run(configuration)
     }
     
@@ -47,16 +41,32 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
 
-    // MARK: - ARSCNViewDelegate
+    // MARK: - ARSCNViewDelegate    
     
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard let imageAnchor = anchor as? ARImageAnchor else { return }
+        
+        let scene = SCNScene(named: "art.scnassets/plane.scn")!
+        let idNode = scene.rootNode.childNode(withName: "planeRootNode", recursively: true)!
+        
+        let (min, max) = idNode.boundingBox
+        let size = SCNVector3Make(max.x - min.x, max.y - min.y, max.z - min.z)
+        let widthRatio = Float(imageAnchor.referenceImage.physicalSize.width) / size.x
+        let heightRatio = Float(imageAnchor.referenceImage.physicalSize.height) / size.z
+        let finalRatio = [widthRatio, heightRatio].min()!
+        
+        idNode.transform = SCNMatrix4(imageAnchor.transform)
+        
+        let appearenceAction = SCNAction.scale(by: CGFloat(finalRatio), duration: 0.4)
+        appearenceAction.timingMode = .easeOut
+        
+        idNode.scale = SCNVector3Make(0.001, 0.001, 0.001)
+        
+        self.sceneView.scene.rootNode.addChildNode(idNode)
+
+        idNode.runAction(appearenceAction)            
+        self.idNode = idNode
     }
-*/
     
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
