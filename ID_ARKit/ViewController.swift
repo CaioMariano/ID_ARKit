@@ -52,6 +52,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
                 let planeScene = SCNScene(named: "art.scnassets/logo_scene.scn")!
                 let planeNode = planeScene.rootNode.childNode(withName: "logo", recursively: true)!
+                let planeNodeChucks = planeScene.rootNode.childNode(withName: "chucks", recursively: true)!
 
                 DispatchQueue.main.async {
                     
@@ -60,6 +61,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                     let widthRatio = Float(imageAnchor.referenceImage.physicalSize.width)/size.x
                     let heightRatio = Float(imageAnchor.referenceImage.physicalSize.height)/size.z
                     let finalRatio = [widthRatio, heightRatio].min()!
+                    let rotationAction = SCNAction.rotateBy(x: 0.5, y: 0.0, z: 0, duration: 1)
+                    let inifiniteAction = SCNAction.repeatForever(rotationAction)
+                   
                     
                     
                     planeNode.transform = SCNMatrix4(imageAnchor.transform)
@@ -67,6 +71,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                     appearanceAction.timingMode = .easeOut
                     planeNode.scale = SCNVector3Make(0.001, 0.001, 0.001)
                     self.sceneView.scene.rootNode.addChildNode(planeNode)
+                    planeNodeChucks.runAction(inifiniteAction)
                     planeNode.runAction(appearanceAction)
                     
                     self.logoNode = planeNode
