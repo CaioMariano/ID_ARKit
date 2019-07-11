@@ -13,14 +13,16 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
-    var idNode: SCNNode!
+    private var planeNode: SCNNode?
+    private var imageNode: SCNNode?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let sceneView = SCNScene()
-        self.sceneView.scene = sceneView
-        self.sceneView.delegate = self        
+        let scene = SCNScene()
+        sceneView.scene = scene
+        self.sceneView.delegate = self
+        sceneView.isPlaying = true
         self.sceneView.showsStatistics = true
     }
     
@@ -34,52 +36,48 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.run(configuration)
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        // Pause the view's session
-        sceneView.session.pause()
-    }
-
-    // MARK: - ARSCNViewDelegate    
+    
+    // MARK: - ARSCNViewDelegate
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        guard let imageAnchor = anchor as? ARImageAnchor else { return }
         
-        let scene = SCNScene(named: "art.scnassets/plane.scn")!
-        let idNode = scene.rootNode.childNode(withName: "planeRootNode", recursively: true)!
-        
-        let (min, max) = idNode.boundingBox
-        let size = SCNVector3Make(max.x - min.x, max.y - min.y, max.z - min.z)
-        let widthRatio = Float(imageAnchor.referenceImage.physicalSize.width) / size.x
-        let heightRatio = Float(imageAnchor.referenceImage.physicalSize.height) / size.z
-        let finalRatio = [widthRatio, heightRatio].min()!
-        
-        idNode.transform = SCNMatrix4(imageAnchor.transform)
-        
-        let appearenceAction = SCNAction.scale(by: CGFloat(finalRatio), duration: 0.4)
-        appearenceAction.timingMode = .easeOut
-        
-        idNode.scale = SCNVector3Make(0.001, 0.001, 0.001)
-        
-        self.sceneView.scene.rootNode.addChildNode(idNode)
-
-        idNode.runAction(appearenceAction)            
-        self.idNode = idNode
+        if anchor is ARImageAnchor {
+            
+            guard let imageAnchor = anchor as? ARImageAnchor else {
+                return
+            }
+            
+            DispatchQueue.global().async {
+                
+                let planeScene = SCNScene(named: "art.scnassets/plane.scn")!
+                let planeNode = planeScene.rootNode.childNode(withName: "planeRootNode", recursively: true)!
+                
+                
+                DispatchQueue.main.async {
+                    
+                    // rotate the planeNode
+                    let rotationAction = SCNAction.rotateBy(x: 0, y: 0.5, z: 0, duration: 1)
+                    let inifiniteAction = SCNAction.repeatForever(rotationAction)
+                    planeNode.runAction(inifiniteAction)
+                    
+                    
+                    let (min, max) = planeNode.boundingBox
+                    let size = SCNVector3Make(max.x - min.x, max.y - min.y, max.z - min.z)
+                    let widthRatio = Float(imageAnchor.referenceImage.physicalSize.width)/size.x
+                    let heightRatio = Float(imageAnchor.referenceImage.physicalSize.height)/size.z
+                    let finalRatio = [widthRatio, heightRatio].min()!
+                    planeNode.transform = SCNMatrix4(imageAnchor.transform)
+                    let appearanceAction = SCNAction.scale(to: CGFloat(finalRatio), duration: 0.4)
+                    appearanceAction.timingMode = .easeOut
+                    planeNode.scale = SCNVector3Make(0.001, 0.001, 0.001)
+                    self.sceneView.scene.rootNode.addChildNode(planeNode)
+                    planeNode.runAction(appearanceAction)
+                    
+                    self.planeNode = planeNode
+                    self.imageNode = node
+                }
+            }
+        }
     }
     
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
-    }
 }
