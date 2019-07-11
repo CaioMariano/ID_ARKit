@@ -30,8 +30,14 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        
+//        guard let referenceImage = ARReferenceImage.referenceImages(inGroupNamed: "Juliano", bundle: nil) else { fatalError() }
+        
         guard let referenceImage = ARReferenceImage.referenceImages(inGroupNamed: "Osvaldo", bundle: nil) else { fatalError() }
         
+//        guard let referenceImage = ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) else { fatalError() }
+        
+                
         let configuration = ARWorldTrackingConfiguration()
         configuration.detectionImages = referenceImage
         sceneView.session.run(configuration)
@@ -64,8 +70,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                     let rotationAction = SCNAction.rotateBy(x: 0.5, y: 0.0, z: 0, duration: 1)
                     let inifiniteAction = SCNAction.repeatForever(rotationAction)
                    
-                    
-                    
                     planeNode.transform = SCNMatrix4(imageAnchor.transform)
                     let appearanceAction = SCNAction.scale(to: CGFloat(finalRatio), duration: 0.4)
                     appearanceAction.timingMode = .easeOut
@@ -110,6 +114,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let animationDuration = Double(min(max(0.1, distance/speed), 2))
         animationInfo = AnimationInfo(startTime: startTime, duration: animationDuration, initialModelPosition: initialPosition, finalModelPosition: finalPosition, initialModelOrientation: initialOrientation, finalModelOrientation: finalOrientation)        
     }
+
 }
 
 struct AnimationInfo {
